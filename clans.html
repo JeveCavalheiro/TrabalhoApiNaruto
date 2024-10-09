@@ -21,6 +21,14 @@
             padding: 10px 0;
             width: 100%;
         }
+        .character-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .jutsu-list {
+            margin-left: 10px; /* Adiciona um espaço entre o nome e os jutsus */
+        }
     </style>
 </head>
 <body>
@@ -120,25 +128,20 @@
                     throw new Error('Detalhes do clã não encontrados');
                 }
 
+                let characters = clanDetails.characters.map(character => `
+                    <li class="character-info">
+                        <img src="${character.images && character.images.length > 0 ? character.images[0] : 'https://via.placeholder.com/80'}" alt="${character.name}" class="character-image"/>
+                        <span>${character.name}</span>
+                        <span class="jutsu-list">${character.jutsu ? character.jutsu.join(", ") : 'Nenhum jutsu disponível'}</span>
+                    </li>`).join('');
+
                 let card = `
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">${clanDetails.name}</h5>
-                                <h6>Jutsus:</h6>
-                                <ul>
-                                    ${clanDetails.characters.map(character => `
-                                        <li>${character.jutsu ? character.jutsu.join(", ") : 'Nenhum jutsu disponível'}</li>
-                                    `).join('')}
-                                </ul>
                                 <h6>Personagens:</h6>
-                                <ul>
-                                    ${clanDetails.characters.map(character => `
-                                        <li>
-                                            <img src="${character.images && character.images.length > 0 ? character.images[0] : 'https://via.placeholder.com/80'}" alt="${character.name}" class="character-image"/>
-                                            ${character.name} 
-                                        </li>`).join('')}
-                                </ul>
+                                <ul>${characters}</ul>
                             </div>
                         </div>
                     </div>
