@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NarutoWiki</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        .character-image {
+            width: 80px;
+            height: auto;
+            margin-right: 10px;
+        }
+        .custom-navbar {
+            background-color: #e87c54;
+        }
+        footer {
+            background-color: #e87c54;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light custom-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Naruto Info</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="clans.html">Clãs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="teams.html">Times</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="villages.html">Vilas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Times</h1>
+        <div class="row">
+            <nav class="col-lg-3">
+                <ul class="list-group" id="ulCategorias">
+                    <li class="list-group-item">Carregando times...</li>
+                </ul>
+            </nav>
+            <section class="col-lg-9">
+                <div class="row" id="divCards">
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer>
+        <p>JEVERSON LUIZ CAVALHEIRO - FUNDAMENTOS AO DESENVOLVIMENTO WEB</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        async function carregarTeams() {
+            let page = 1;
+            const allTeams = [];
+
+            while (true) {
+                const url = `https://narutodb.xyz/api/team?page=${page}&pageSize=20`;
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Erro na resposta da API: ' + response.status);
+                    const res = await response.json();
+
+                    if (!res.teams || res.teams.length === 0) {
+                        break;
+                    }
+
+                    allTeams.push(...res.teams);
+                    page++;
+                } catch (error) {
+                    console.error('Erro ao carregar times:', error);
+                    document.getElementById('ulCategorias').innerHTML = `<li class="list-group-item text-danger">Erro: ${error.message}</li>`;
+                    return;
+                }
+            }
+
+            let li = '';
+            allTeams.forEach(team => {
+                li += `<li class="list-group-item">
+                         <a href="#" onclick="carregarDetalhes(${team.id})">${team.name}</a>
+                         </li>`;
+            });
+
+            document.getElementById('ulCategorias').innerHTML = li;
+            document.getElementById('divCards').innerHTML = '';
+        }
+
+        async function carregarDetalhes(id) {
+            const url = `https://narutodb.xyz/api/team/${id}`;
+            console.log(`Loading team details from: ${url}`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erro na resposta da API: ' + response.status);
+                
+                const res = await response.json();
+                console.log('Team Details Response:', res);
+
+                const teamDetails = res;
+                console.log('Team Details Object:', teamDetails);
+
+                if (!teamDetails || !teamDetails.name) {
+                    throw new Error('Detalhes do time não encontrados');
+                }
+
+                let members = teamDetails.characters.length > 0 
+                    ? teamDetails.characters.map(character => `
+                        <li>
+                            <img src="${character.images && character.images.length > 0 ? character.images[0] : 'https://via.placeholder.com/80'}" alt="${character.name}" class="character-image"/>
+                            ${character.name} 
+                        </li>`).join('')
+                    : 'Nenhum membro disponível.';
+
+                let card = `
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${teamDetails.name}</h5>
+                                <h6>Integrantes:</h6>
+                                <ul>${members}</ul>
+                                <p class="card-text">Informações adicionais sobre o time.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('divCards').innerHTML = card;
+            } catch (error) {
+                console.error('Erro ao carregar detalhes do time:', error);
+                document.getElementById('divCards').innerHTML = `<div class="col-lg-12"><div class="alert alert-danger">Erro ao carregar detalhes: ${error.message}</div></div>`;
+            }
+        }
+
+        window.onload = carregarTeams;
+    </script>
+</body>
+</html>
