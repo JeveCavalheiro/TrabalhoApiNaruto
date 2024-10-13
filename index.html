@@ -1,45 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Naruto Info</title>
+    <title>NarutoWiki</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
-        body {
-            background-image: url('imagens/capa.jpg');
-            background-size: cover;
-            background-position: center;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
+        .character-image {
+            width: 80px;
+            height: auto;
+            margin-right: 10px;
         }
         .custom-navbar {
-            background-color: #e87c54;
-            z-index: 1;
+            background-color: #e87c54; 
         }
-        .container {
-            position: relative;
-            z-index: 2;
-            color: white;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .logo {
-            max-width: 100%;
-            height: auto;
-        }
-        footer {
-            background-color: #e87c54;
-            color: white;
-            text-align: center;
-            padding: 10px 0;
-            width: 100%;
+        .logs-table {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -53,27 +29,232 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="clans.html">Clãs</a>
+                        <a class="nav-link" href="#" onclick="loadClans()">Clãs</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="teams.html">Times</a>
+                        <a class="nav-link" href="#" onclick="loadTeams()">Times</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="villages.html">Vilas</a>
+                        <a class="nav-link" href="#" onclick="loadVillages()">Vilas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logsModal">Ver Logs</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-
+    
     <div class="container">
-        <img src="imagens/Naruto_logo.png" alt="Naruto Logo" class="logo" />
+        <h1 id="main-title">NarutoWiki</h1>
+        <div class="row">
+            <nav class="col-lg-3">
+                <ul class="list-group" id="ulCategorias">
+                    <li class="list-group-item">Carregando...</li>
+                </ul>
+            </nav>
+            <section class="col-lg-9">
+                <div class="row" id="divCards"></div>
+            </section>
+        </div>
     </div>
 
-    <footer>
-        <p>JEVERSON LUIZ CAVALHEIRO - FUNDAMENTOS AO DESENVOLVIMENTO WEB</p>
-    </footer>
+    
+    <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logsModalLabel">Logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Log</th>
+                                <th>API</th>
+                                <th>Método</th>
+                                <th>Resultado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        const matricula = '435678'; 
+        async function loadClans() {
+            document.getElementById('main-title').innerText = 'Clãs';
+            await loadData('clan');
+            insirirLog('51 ', 'Acessou Clãs');
+        }
+
+        async function loadTeams() {
+            document.getElementById('main-title').innerText = 'Times';
+            await loadData('team');
+            insirirLog('180', 'Acessou Times');
+        }
+
+        async function loadVillages() {
+            document.getElementById('main-title').innerText = 'Vilas';
+            await loadData('village');
+            insirirLog('38', 'Acessou Vilas');
+        }
+
+        async function loadData(category) {
+            let page = 1;
+            const allItems = [];
+
+            while (true) {
+                const url = `https://narutodb.xyz/api/${category}?page=${page}&pageSize=20`;
+                try {
+                    const response = await fetch(url);
+                    if (response.status === 404) {
+                        throw new Error('Recurso não encontrado. Verifique se a API está correta.');
+                    }
+                    if (!response.ok) throw new Error('Erro na resposta da API: ' + response.status);
+                    
+                    const res = await response.json();
+
+                    if (!res[`${category}s`] || res[`${category}s`].length === 0) {
+                        break; 
+                    }
+
+                    allItems.push(...res[`${category}s`]);
+                    page++;
+                } catch (error) {
+                    console.error(`Erro ao carregar ${category}s:`, error);
+                    document.getElementById('ulCategorias').innerHTML = `<li class="list-group-item text-danger">Erro: ${error.message}</li>`;
+                    return;
+                }
+            }
+
+            let li = '';
+            allItems.forEach(item => {
+                li += `<li class="list-group-item">
+                         <a href="#" onclick="loadDetails('${category}', ${item.id})">${item.name}</a>
+                         </li>`;
+            });
+
+            document.getElementById('ulCategorias').innerHTML = li;
+            document.getElementById('divCards').innerHTML = ''; 
+        }
+
+        async function loadDetails(category, id) {
+            const url = `https://narutodb.xyz/api/${category}/${id}`;
+            console.log(`Loading ${category} details from: ${url}`);
+            try {
+                const response = await fetch(url);
+                if (response.status === 404) {
+                    throw new Error('Recurso não encontrado. Verifique se a API está correta.');
+                }
+                if (!response.ok) throw new Error('Erro na resposta da API: ' + response.status);
+                
+                const res = await response.json();
+                console.log(`${category.charAt(0).toUpperCase() + category.slice(1)} Details Response:`, res);
+
+                const details = res;
+                if (!details || !details.name) {
+                    throw new Error(`Detalhes do ${category} não encontrados`);
+                }
+
+                let characters = details.characters && details.characters.length > 0 
+                    ? details.characters.map(character => {
+                        const imageUrl = character.images && character.images.length > 0 ? character.images[0] : 'https://via.placeholder.com/80';
+                        const debut = character.debut ? `Anime: ${character.debut.anime || 'N/A'}, Novel: ${character.debut.novel || 'N/A'}` : 'Não disponível';
+                        const sex = character.personal ? `Sexo: ${character.personal.sex || 'N/A'}` : 'Não disponível';
+                        const affiliation = character.personal ? `Afiliação: ${character.personal.affiliation || 'N/A'}` : 'Não disponível';
+
+                        const family = character.family && Object.keys(character.family).length > 0
+                            ? `
+                            <ul>
+                                ${Object.entries(character.family).map(([relation, name]) => `<li><strong>${relation.charAt(0).toUpperCase() + relation.slice(1)}:</strong> ${name || 'N/A'}</li>`).join('')}
+                            </ul>`
+                            : 'Nenhum dado de família disponível.';
+
+                        const jutsus = character.jutsu && character.jutsu.length > 0 
+                            ? `<ul>${character.jutsu.map(jutsu => `<li>${jutsu}</li>`).join('')}</ul>` 
+                            : 'Nenhum jutsu disponível.';
+
+                        return `
+                            <li>
+                                <img src="${imageUrl}" alt="${character.name}" class="character-image"/>
+                                ${character.name} 
+                                <ul>
+                                    <li><strong>Estreia:</strong> ${debut}</li>
+                                    <li><strong>${sex}</strong></li>
+                                    <li><strong>${affiliation}</strong></li>
+                                    <li><strong>Família:</strong> ${family}</li>
+                                    <li><strong>Jutsus:</strong> ${jutsus}</li>
+                                    <li><strong>Voz:</strong> ${character.voiceActors ? `Japonês: ${character.voiceActors.japanese || 'N/A'}` : 'Não disponível'}</li>
+                                </ul>
+                            </li>`;
+                    }).join('') : '<li>Nenhum personagem encontrado.</li>';
+
+                document.getElementById('divCards').innerHTML = `<h2>${details.name}</h2><ul>${characters}</ul>`;
+            } catch (error) {
+                console.error(`Erro ao carregar detalhes do ${category}:`, error);
+                document.getElementById('divCards').innerHTML = `<h4 class="text-danger">Erro: ${error.message}</h4>`;
+            }
+        }
+
+        function insirirLog(resultado, metodo) {
+            const apiLogs = `https://www.piway.com.br/unoesc/api/inserir/log/${matricula}/NarutoDB/${metodo}/${resultado}`;
+            fetch(apiLogs)
+                .then(response => response.json())
+                .then(() => verLogs());
+        }
+
+        function deletarLogs(logId) {
+            const apiLogs = `https://www.piway.com.br/unoesc/api/excluir/log/${logId}/aluno/${matricula}`;
+            fetch(apiLogs)
+                .then(() => verLogs());
+        }
+
+        function verLogs() {
+            const apiLogs = `https://www.piway.com.br/unoesc/api/logs/${matricula}`;
+            fetch(apiLogs)
+                .then(response => response.json())
+                .then(data => {
+                    const cardLogs = document.getElementById('logs');
+                    cardLogs.innerHTML = '';
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.className = "bg-white border-b dark:bg-gray-800 dark:border-gray-700";
+                        row.innerHTML = `
+                            <td class="px-6 py-4">${log.idlog}</td>
+                            <td class="px-6 py-4">${log.log}</td>
+                            <td class="px-3 py-2">${log.api}</td>
+                            <td>${log.metodo}</td>
+                            <td>${log.resultado}</td>
+                            <td>
+                                <button type="button" data-value-log='${log.idlog}' class="log text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </td>
+                        `;
+                        cardLogs.appendChild(row);
+
+                        const deleteButton = row.querySelector('.log');
+                        deleteButton.addEventListener('click', function() {
+                            const logId = this.getAttribute('data-value-log');
+                            const confirmation = confirm("Tem certeza que deseja excluir este log?");
+                            if (confirmation) {
+                                deletarLogs(logId);
+                            }
+                        });
+                    });
+                })
+                .catch(error => console.error('Erro ao carregar os logs:', error));
+        }
+
+        verLogs(); 
+    </script>
 </body>
 </html>
